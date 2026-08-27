@@ -27,18 +27,70 @@ imageOiseau2.src = "images/oiseau2.png";
 //Paramètre des tuyaux
 const largeurTuyau = 40;
 const ecartTuyau = 80;
-let xTuyau = 200;
-let yTuyauBas = cvs.height - 150;
+
+let tabTuyaux = [];
+tabTuyaux[0]= {
+    x : cvs.width ,
+    y: cvs.height - 150
+}
+// Paramettre de l'oiseau
+let xOiseau = 100;
+let yOiseau = 150;
+const gravite = 2;
+let OiseauMonte = 0;
+
+document.addEventListener("keypress" ,(e)=>{
+    if (e.code==="Space") {
+
+        console.log(e)
+        OiseauMonte =25;
+        yOiseau = yOiseau -25;
+    }else{
+        return;
+        
+    }
+
+})
+
 
 // Dessin
 function dessine(){
     ctx.drawImage(imageArrirePlan,0,0);
-    ctx.drawImage(imageTuyauBas,xTuyau,yTuyauBas);
-    ctx.drawImage(imageTuyauHaut,xTuyau,yTuyauBas - ecartTuyau - imageTuyauHaut.height);
+    // Gestion des tuyau
+    for(let i= 0;i < tabTuyaux.length;i++){
+        tabTuyaux[i].x-- ;
+
+        //Dessin du tuyau
+        ctx.drawImage(imageTuyauBas,tabTuyaux[i].x,tabTuyaux[i].y);
+        ctx.drawImage(imageTuyauHaut,tabTuyaux[i].x,tabTuyaux[i].y-ecartTuyau-imageTuyauHaut.height);
+        //nouveau tuyeau+hauteur random
+        if (tabTuyaux[i].x===100) {
+            tabTuyaux.push( {
+                x: cvs.width,
+                y:Math.floor(100 + Math.random()*100)
+
+            }
+                
+            )
+        } else if (tabTuyaux[i].x+largeurTuyau<0) {
+            tabTuyaux.splice(i,1);
+            i--;
+        }
+    }
     ctx.drawImage(imageAvantPlan,0,cvs.height - imageAvantPlan.height);
-    ctx.drawImage(imageOiseau1,150,150);
-    ctx.lineWidth = 3;
+
+    // Mouvement de l'oisau
+    yOiseau = yOiseau + gravite;
+    if (OiseauMonte>0) {
+        OiseauMonte -- ;
+        ctx.drawImage(imageOiseau2,xOiseau,yOiseau);
+    }else{
+        ctx.drawImage(imageOiseau1,xOiseau,yOiseau)
+    }
+
+    ctx.lineWidth = 0;
     ctx.strokeRect(0,0,cvs.width,cvs.height);
-    requestAnimationFrame(dessine)
+    requestAnimationFrame(dessine);
+   
 }
 dessine()
