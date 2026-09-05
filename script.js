@@ -62,8 +62,13 @@ let score = 0;
 //fonction fesant le saut d'oiseau
 function saut(){
  // console.log(e)
-  OiseauMonte =10  ;
-  yOiseau = yOiseau -25;
+ if(finDuJeu=== false){
+    OiseauMonte =10  ;
+    yOiseau = yOiseau -25;
+
+ } else{
+   setTimeout(rechargeLeJeu,500)
+ }
   
 
 }
@@ -88,7 +93,11 @@ document.addEventListener ("click",() =>{
   
 
 })
-
+//recharger le game 
+function rechargeLeJeu() {
+    finDuJeu = false;
+    location.reload();
+}
 
 // Dessin
 function dessine(){
@@ -151,12 +160,26 @@ function dessine(){
 
 
 
-    ctx.lineWidth = 0;
+    ctx.lineWidth = 3;
     ctx.strokeRect(0,0,cvs.width,cvs.height);
+    // AFFICHAGE SCORE
+    ctx.fillStyle = "black";
+    ctx.font = "20px verdana";
+    ctx.fillText("Score: "+ score, 10, cvs.height -20)
     if(finDuJeu === false){
       requestAnimationFrame(dessine);
       
-    } 
+    } else{
+        // AFFICHAGE GAME OVER 
+        ctx.fillStyle = "black";
+        ctx.font = "30px verdana";
+        ctx.fillText("GAME OVER", 50, 200);
+
+        // AFFICHAGE SCO
+        ctx.fillStyle = "black";
+        ctx.font = "20px verdana";
+        ctx.fillText("Cliquer pour recommencer ",  15, 230)
+    }
       
    
 }
