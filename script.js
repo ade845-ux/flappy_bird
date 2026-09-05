@@ -24,6 +24,20 @@ imageOiseau1.src = "images/oiseau1.png";
 const imageOiseau2 = new Image();
 imageOiseau2.src = "images/oiseau2.png";
 
+// SON
+const sonVole = new Audio();
+sonVole.src = "sons/sonVole.mp3";
+const sonChoc = new Audio();
+sonChoc.src = "sons/sonChoc.mp3";
+const sonScore = new Audio();
+sonScore.src = "sons/sonScore.mp3";
+
+// Recommence le son depuis le début à chaque saut.
+function joueSonVole() {
+    sonVole.currentTime = 0;
+    sonVole.play();
+}
+
 //Paramètre des tuyaux
 const largeurTuyau = 40;
 const ecartTuyau = 80;
@@ -36,19 +50,42 @@ tabTuyaux[0]= {
 // Paramettre de l'oiseau
 let xOiseau = 100;
 let yOiseau = 150;
-const gravite = 2;
+const gravite = 1;
 let OiseauMonte = 0;
+const largeurOiseau = 34;
+const hauteurOiseau = 24;
 
+// parametre jeu
+let finDuJeu = false;
+let score = 0;
+
+//fonction fesant le saut d'oiseau
+function saut(){
+ // console.log(e)
+  OiseauMonte =10  ;
+  yOiseau = yOiseau -25;
+  
+
+}
+// Saut par sapce
 document.addEventListener("keypress" ,(e)=>{
     if (e.code==="Space") {
+        saut()
+        // Joue le son lorsque le joueur appuie sur Espace.
+        joueSonVole()
 
-        console.log(e)
-        OiseauMonte =25;
-        yOiseau = yOiseau -25;
     }else{
         return;
         
     }
+
+})
+// Saut avec click droit 
+document.addEventListener ("click",() =>{
+  saut();
+    // Joue le son lorsque le joueur clique.
+    joueSonVole()
+  
 
 })
 
@@ -75,6 +112,28 @@ function dessine(){
         } else if (tabTuyaux[i].x+largeurTuyau<0) {
             tabTuyaux.splice(i,1);
             i--;
+            continue;
+        }
+        // Gestion des colisions
+        const collisionHorizontale =
+            xOiseau + largeurOiseau >= tabTuyaux[i].x &&
+            xOiseau <= tabTuyaux[i].x + largeurTuyau;
+        const collisionVerticale =
+            yOiseau + hauteurOiseau > tabTuyaux[i].y ||
+            yOiseau < tabTuyaux[i].y - ecartTuyau;
+
+        if (yOiseau < 0 || yOiseau + hauteurOiseau > 300 ||
+            (collisionHorizontale && collisionVerticale)) {
+                sonChoc.play()
+                finDuJeu= true;
+
+
+               
+        }
+        // Gestion du score
+        if (xOiseau === tabTuyaux[i].x+largeurTuyau+5) {
+            score++;
+            sonScore.play();
         }
     }
     ctx.drawImage(imageAvantPlan,0,cvs.height - imageAvantPlan.height);
@@ -88,9 +147,17 @@ function dessine(){
         ctx.drawImage(imageOiseau1,xOiseau,yOiseau)
     }
 
+    
+
+
+
     ctx.lineWidth = 0;
     ctx.strokeRect(0,0,cvs.width,cvs.height);
-    requestAnimationFrame(dessine);
+    if(finDuJeu === false){
+      requestAnimationFrame(dessine);
+      
+    } 
+      
    
 }
 dessine()
