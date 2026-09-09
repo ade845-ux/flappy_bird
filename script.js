@@ -25,12 +25,18 @@ const imageOiseau2 = new Image();
 imageOiseau2.src = "images/oiseau2.png";
 
 // SON
+const sonGameover = new Audio();
+sonGameover.src = "sons/sonGameover.mp3";
 const sonVole = new Audio();
 sonVole.src = "sons/sonVole.mp3";
 const sonChoc = new Audio();
 sonChoc.src = "sons/sonChoc.mp3";
 const sonScore = new Audio();
 sonScore.src = "sons/sonScore.mp3";
+const sonFond = new Audio();
+sonFond.src = "sons/sonFond.mp3"
+sonFond.loop = true;
+sonFond.volume = 0.3;
 
 // Recommence le son depuis le début à chaque saut.
 function joueSonVole() {
@@ -61,6 +67,9 @@ let score = 0;
 
 //fonction fesant le saut d'oiseau
 function saut(){
+    if (sonFond.paused) {
+        sonFond.play();
+    }
  // console.log(e)
  if(finDuJeu=== false){
     OiseauMonte =10  ;
@@ -133,7 +142,7 @@ function dessine(){
 
         if (yOiseau < 0 || yOiseau + hauteurOiseau > 300 ||
             (collisionHorizontale && collisionVerticale)) {
-                sonChoc.play()
+                sonChoc.play();
                 finDuJeu= true;
 
 
@@ -170,6 +179,11 @@ function dessine(){
       requestAnimationFrame(dessine);
       
     } else{
+        //son de game over
+        sonFond.pause() ;
+        setTimeout(() => {
+            sonGameover.play();
+        }, 1000); 
         // AFFICHAGE GAME OVER 
         ctx.fillStyle = "black";
         ctx.font = "30px verdana";
