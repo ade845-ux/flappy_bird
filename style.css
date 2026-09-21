@@ -1,0 +1,21 @@
+/* Centre le jeu avec un fond sombre */
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #1a1a1a;
+    height: 100dvh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+/* Adapte le canvas a la taille de l'ecran sans le deformer */
+#zone_de_dessin {
+    height: 92dvh;
+    max-width: 96vw;
+    aspect-ratio: 300 / 400;
+    image-rendering: pixelated;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
+    touch-action: manipulation;
+}
