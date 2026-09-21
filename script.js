@@ -8,6 +8,9 @@ const ctx = cvs.getContext("2d");
 
 const imageArrirePlan = new Image();
 imageArrirePlan.src = "images/arrierePlan.png";
+const imageArrirePlan0 = new Image();
+imageArrirePlan0.src = "images/arrierePlan0.png";
+let imageArrirePlanActuel = imageArrirePlan;
 
 const imageAvantPlan = new Image();
 imageAvantPlan.src = "images/avantPlan.png";
@@ -37,6 +40,8 @@ const sonFond = new Audio();
 sonFond.src = "sons/sonFond.mp3"
 sonFond.loop = true;
 sonFond.volume = 0.3;
+let sonActive = true;
+const tousLesSons = [sonGameover, sonVole, sonChoc, sonScore, sonFond];
 
 // Recommence le son depuis le début à chaque saut.
 function joueSonVole() {
@@ -64,6 +69,12 @@ const hauteurOiseau = 24;
 // parametre jeu
 let finDuJeu = false;
 let score = 0;
+let meilleurScore = Number(localStorage.getItem("flappyBirdMeilleurScore")) || 0;
+const scoreChangementDecor = 5;
+let decorChange = false;
+let transitionDecor = false;
+let progressionTransitionDecor = 0;
+const dureeTransitionDecor = 60;
 
 // Défilement du décor (Parallaxe)
 let xFond = 0;
@@ -79,8 +90,22 @@ function togglePause() {
     enPause = !enPause;
     if (enPause) {
         sonFond.pause();
-    } else {
+    } else if (sonActive) {
         sonFond.play();
+    }
+}
+
+function toggleSon() {
+    sonActive = !sonActive;
+    tousLesSons.forEach((son) => {
+        son.muted = !sonActive;
+    });
+}
+
+function verifieChangementDecor() {
+    if (!decorChange && score >= scoreChangementDecor) {
+        transitionDecor = true;
+        decorChange = true;
     }
 }
 
@@ -93,6 +118,16 @@ function estClicSurPause(e) {
     const clickY = (e.clientY - rect.top) * scaleY;
 
     return (clickX >= 250 && clickX <= 295 && clickY >= 10 && clickY <= 55);
+}
+
+function estClicSurSon(e) {
+    const rect = cvs.getBoundingClientRect();
+    const scaleX = cvs.width / rect.width;
+    const scaleY = cvs.height / rect.height;
+    const clickX = (e.clientX - rect.left) * scaleX;
+    const clickY = (e.clientY - rect.top) * scaleY;
+
+    return (clickX >= 210 && clickX < 250 && clickY >= 10 && clickY <= 55);
 }
 
 //fonction fesant le saut d'oiseau
@@ -110,7 +145,7 @@ function saut(){
 
 // Saut par Espace et touche P pour Pause
 document.addEventListener("keydown", (e) => {
-    if (e.code === "KeyP") {
+    if (e.code === "KeyP" || e.code === "Escape") {
         togglePause();
     } else if (e.code === "Space") {
         if (!enPause) {
@@ -130,6 +165,12 @@ document.addEventListener("click", (e) => {
     // Si on clique sur l'icône pause en haut à droite
     if (estClicSurPause(e)) {
         togglePause();
+        return;
+    }
+
+    // Si on clique sur l'icône son en haut à droite
+    if (estClicSurSon(e)) {
+        toggleSon();
         return;
     }
 
@@ -155,8 +196,30 @@ function dessine(){
         xFond -= vitesseFond;
         if (xFond <= -cvs.width) xFond = 0;
     }
-    ctx.drawImage(imageArrirePlan, xFond, 0);
-    ctx.drawImage(imageArrirePlan, xFond + cvs.width, 0);
+    ctx.drawImage(imageArrirePlanActuel, xFond, 0);
+    ctx.drawImage(imageArrirePlanActuel, xFond + cvs.width, 0);
+
+    if (transitionDecor) {
+        progressionTransitionDecor++;
+        const progression = Math.min(
+            progressionTransitionDecor / dureeTransitionDecor,
+            1
+        );
+        const debutNouveauDecor = cvs.width * (1 - progression);
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(debutNouveauDecor, 0, cvs.width - debutNouveauDecor, cvs.height);
+        ctx.clip();
+        ctx.drawImage(imageArrirePlan0, xFond, 0);
+        ctx.drawImage(imageArrirePlan0, xFond + cvs.width, 0);
+        ctx.restore();
+
+        if (progression === 1) {
+            imageArrirePlanActuel = imageArrirePlan0;
+            transitionDecor = false;
+        }
+    }
 
     // Gestion des tuyaux
     for(let i = 0; i < tabTuyaux.length; i++){
@@ -198,6 +261,11 @@ function dessine(){
             // Gestion du score
             if (xOiseau === tabTuyaux[i].x + largeurTuyau + 5) {
                 score++;
+                verifieChangementDecor();
+                if (score > meilleurScore) {
+                    meilleurScore = score;
+                    localStorage.setItem("flappyBirdMeilleurScore", meilleurScore);
+                }
                 sonScore.play();
             }
         }
@@ -238,13 +306,47 @@ function dessine(){
     ctx.lineWidth = 2;
     ctx.strokeText("Score : " + score, cvs.width / 2, 40);
 
-    // BOUTON PAUSE EN HAUT À DROITE
-    ctx.font = "bold 20px sans-serif";
+    ctx.font = "bold 14px sans-serif";
+    ctx.fillStyle = "white";
+    ctx.textAlign = "left";
+    ctx.fillText("Record : " + meilleurScore, 8, cvs.height - 8);
+    ctx.strokeStyle = "black";
+    ctx.lineWidth = 1;
+    ctx.strokeText("Record : " + meilleurScore, 8, cvs.height - 8);
+
+    // BOUTONS PAUSE ET SON EN HAUT À DROITE
+    ctx.font = "bold 28px sans-serif";
     ctx.fillStyle = "white";
     ctx.fillText(enPause ? "▶" : "⏸", 275, 40);
     ctx.strokeStyle = "black";
     ctx.lineWidth = 1;
     ctx.strokeText(enPause ? "▶" : "⏸", 275, 40);
+
+    // ICONE SON EN BLANC, AVEC UNE BARRE QUAND LE SON EST COUPE
+    ctx.fillStyle = "white";
+    ctx.strokeStyle = "black";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(215, 29);
+    ctx.lineTo(221, 29);
+    ctx.lineTo(229, 22);
+    ctx.lineTo(229, 48);
+    ctx.lineTo(221, 41);
+    ctx.lineTo(215, 41);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    if (sonActive) {
+        ctx.beginPath();
+        ctx.arc(228, 35, 10, -Math.PI / 3, Math.PI / 3);
+        ctx.stroke();
+    } else {
+        ctx.beginPath();
+        ctx.moveTo(211, 22);
+        ctx.lineTo(239, 49);
+        ctx.stroke();
+    }
 
     // ÉCRAN DE PAUSE
     if (enPause) {
@@ -288,6 +390,11 @@ function dessine(){
         ctx.fillStyle = "white";
         ctx.fillText("Score final : " + score, cvs.width / 2, 220);
         ctx.strokeText("Score final : " + score, cvs.width / 2, 220);
+
+        ctx.font = "bold 18px sans-serif";
+        ctx.fillStyle = "#f1c40f";
+        ctx.fillText("Meilleur score : " + meilleurScore, cvs.width / 2, 242);
+        ctx.strokeText("Meilleur score : " + meilleurScore, cvs.width / 2, 242);
 
         ctx.font = "16px sans-serif";
         ctx.fillStyle = "#f1c40f";
